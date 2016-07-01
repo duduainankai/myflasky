@@ -67,11 +67,29 @@ def template():
 def templateuser(name):
 	'''
 	第一个参数为模版的文件名，随后的参数都是键值对，表示模板中变量的真实值
+	模板中的变量可以复杂的数据结构，如列表字典等
+	可以在变量名后用竖线分隔添加过滤器
 	'''
 	return render_template('user.html', name=name)
 
 
+@app.route('/template/filter')
+def templatefilter():
+	'''
+	在html页面中增加过滤器
+	'''
+	content = '<h2 style="color:red">This is a red safe filter!</h2>'
+	return render_template('filter.html', content=content)
+
+
+@app.route('/control/<user>')
+def control(user=None):
+	'''
+	页面中的控制流
+	'''
+	return render_template('control.html', user=user)
+
 
 if __name__ == "__main__":
-	#app.run(debug=True)xz
+	#app.run(debug=True)
 	manager.run()	#通过添加扩展的方式启动项目, python hello.py runserver --host 0.0.0.0
