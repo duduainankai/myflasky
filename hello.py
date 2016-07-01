@@ -8,11 +8,15 @@ from flask import render_template
 
 from flask.ext.script import Manager
 from flask.ext.bootstrap import Bootstrap
+from flask.ext.moment import Moment
+
+from datetime import datetime
 
 
 app = Flask(__name__)
 manager = Manager(app)	#适用很多的扩展：将程序实例作为参数传给构造函数
 bootstrap = Bootstrap(app)
+moment = Moment(app)
 
 
 
@@ -62,7 +66,8 @@ def template():
 	'''
 	默认下会在templates文件夹中寻找模板
 	'''
-	return render_template('index.html')
+	#return render_template('index.html')
+	return render_template('index.html', current_time=datetime.utcnow())
 
 
 @app.route('/template/<name>')
