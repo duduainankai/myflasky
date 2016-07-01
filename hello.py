@@ -4,7 +4,10 @@
 from flask import Flask
 from flask import make_response
 from flask import redirect
+from flask import render_template
+
 from flask.ext.script import Manager
+
 
 app = Flask(__name__)
 manager = Manager(app)	#适用很多的扩展：将程序实例作为参数传给构造函数
@@ -52,7 +55,23 @@ def redir():
 	return redirect("http://lizheming.top")
 
 
+@app.route('/template')
+def template():
+	'''
+	默认下会在templates文件夹中寻找模板
+	'''
+	return render_template('index.html')
+
+
+@app.route('/template/<name>')
+def templateuser(name):
+	'''
+	第一个参数为模版的文件名，随后的参数都是键值对，表示模板中变量的真实值
+	'''
+	return render_template('user.html', name=name)
+
+
 
 if __name__ == "__main__":
-	#app.run(debug=True)
-	manager.run()	#通过添加扩展的方式启动项目
+	#app.run(debug=True)xz
+	manager.run()	#通过添加扩展的方式启动项目, python hello.py runserver --host 0.0.0.0
