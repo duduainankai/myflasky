@@ -73,7 +73,7 @@ def templateuser(name):
 	可以在变量名后用竖线分隔添加过滤器
 	'''
 	#return render_template('user.html', name=name)
-	return render_template('buser.html', name=name)
+	return render_template('buser.html', name=name)	# 继承自bootstrap得模板html
 
 
 @app.route('/template/filter')
@@ -91,6 +91,19 @@ def control(user=None):
 	页面中的控制流
 	'''
 	return render_template('control.html', user=user)
+
+
+@app.errorhandler(404)
+def page_not_found(e):
+	'''
+	有参数e！
+	'''
+	return render_template('404.html'), 404
+
+
+@app.errorhandler(500)
+def internal_server_error(e):
+	return render_template('500.html'), 500
 
 
 if __name__ == "__main__":
