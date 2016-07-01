@@ -2,6 +2,13 @@
 
 {% block title %}MyFlasky{% endblock %}
 
+{% block head %}
+{{ super() }}
+<!-- 引入静态资源  'static'特殊的静态路由 -->
+<link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+<link rel="icon" type="text/css" href="{{ url_for('static', filename='favicon.ico') }}">
+{% endblock %}
+
 {% block navbar %}
 <div class="navbar navbar-inverse" role="navigation">
 	<div class="container">
@@ -16,7 +23,9 @@
 		</div>
 		<div class="navbar-collapse collapse">
 			<ul class="nav navbar-nav">
+				{% block links %}
 				<li><a href="/">Home</a></li>
+				{% endblock %}
 			</ul>
 		</div>
 	</div>

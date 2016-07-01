@@ -2,6 +2,19 @@
 
 {% block title %}MyFlasky - user{% endblock %}
 
+{% block links %}
+{{ super() }}
+<!-- 动态生成链接 -->
+<li>
+	<!-- 链接中可以传动态路由的参数 -->
+	<a href="{{ url_for('user', name='duduainankai', _external=True) }}">duduainankai</a>
+</li>
+<li>
+	<!-- 链接中还可以传额外参数，类似于requestparamater -->
+	<a href="{{ url_for('index', _external=True, page=2) }}">dudu</a>
+</li>
+{% endblock %}
+
 {% block page_content%}
 	<div class="page-header">
 		<h1>Hello, {{ name }}</h1>
