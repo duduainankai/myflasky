@@ -7,10 +7,12 @@ from flask import redirect
 from flask import render_template
 
 from flask.ext.script import Manager
+from flask.ext.bootstrap import Bootstrap
 
 
 app = Flask(__name__)
 manager = Manager(app)	#适用很多的扩展：将程序实例作为参数传给构造函数
+bootstrap = Bootstrap(app)
 
 
 
@@ -70,7 +72,8 @@ def templateuser(name):
 	模板中的变量可以复杂的数据结构，如列表字典等
 	可以在变量名后用竖线分隔添加过滤器
 	'''
-	return render_template('user.html', name=name)
+	#return render_template('user.html', name=name)
+	return render_template('buser.html', name=name)
 
 
 @app.route('/template/filter')
