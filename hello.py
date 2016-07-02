@@ -15,19 +15,49 @@ from flask.ext.moment import Moment 	#引入时间管理
 from flask.ext.wtf import Form 	#引入Form基类，由Flask－WTF扩展定义
 from wtforms import StringField, SubmitField, FileField 	#字段可直接从WTForms中导入
 from wtforms.validators import Required 	#验证函数可直接从WTForms中导入
+from flask.ext.sqlalchemy import SQLAlchemy 	#数据库操作
 
 from datetime import datetime
 
+import os
 import sys
 reload(sys)
 sys.setdefaultencoding("utf-8")
 
+basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '******'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'data.sqlite')
+app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
+
 manager = Manager(app)	#适用很多的扩展：将程序实例作为参数传给构造函数
 bootstrap = Bootstrap(app)
 moment = Moment(app)
+db = SQLAlchemy(app)
+
+
+class Role(db.Model):
+	__tablename__ = 'roles'
+	id = db.Column(db.Integer, primary_key=True)
+	name = db.Column(db.String(64), unique=True)
+	#role users之间的一对多的关系
+	#lazy设置为dynamic类似hibernate的懒加载，只加载查询不加载数据
+	users = db.relationship('User', backref='role', lazy='dynamic')	
+
+	def __repr__(self):
+		return '<Role %r>' % self.name
+
+
+class User(db.Model):
+	__tablename__ = 'users'
+	id = db.Column(db.Integer, primary_key=True)
+	username = db.Column(db.String(64), unique=True, index=True)
+	#role users之间的一对多的关系
+	role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
+
+	def __repr__(self):
+		return '<User %r>' % self.username
 
 
 class NameForm(Form):
@@ -87,18 +117,21 @@ def template():
 	'''
 	#return render_template('index.html')
 	#return render_template('index.html', current_time=datetime.utcnow())
-	name = None
 	form = NameForm()
 	#根据返回值决定是重新渲染表单还是处理表单提交的数据，
 	#第一次访问是一个GET请求 函数返回false 
 	if form.validate_on_submit():
-		old_name = session.get("name")
-		print old_name
-		if old_name is not None and old_name != form.name.data:
-			flash("你居然修改了你的名字！")
-		session["name"] = form.name.data
-		return redirect(url_for("template"))
-	return render_template('index.html', form=form, current_time=datetime.utcnow(), name=session.get("name"))
+		user = User.query.filter_by(username=form.name.data).first()
+		if user is None:
+			user = User(username=form.name.data)
+			db.session.add(user)
+			session['known'] = False
+		else:
+			session['known'] = True
+		session['name'] = form.name.data
+		return redirect(url_for('template'))
+	return render_template('index.html', current_time=datetime.utcnow(), form=form, 
+		name=session.get('name'), known=session.get('known', False))
 
 
 @app.route('/template/<name>')
