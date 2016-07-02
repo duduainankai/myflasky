@@ -1,5 +1,5 @@
-#!/usr/bin/env python
-# encoding: utf-8
+# !/usr/bin/env python
+#  encoding: utf-8
 
 from flask import Flask
 from flask import make_response
@@ -9,13 +9,15 @@ from flask import session
 from flask import url_for
 from flask import flash
 
-from flask.ext.script import Manager 	#可指定启动方式
-from flask.ext.bootstrap import Bootstrap 	#引入bootstrap
-from flask.ext.moment import Moment 	#引入时间管理
-from flask.ext.wtf import Form 	#引入Form基类，由Flask－WTF扩展定义
-from wtforms import StringField, SubmitField, FileField 	#字段可直接从WTForms中导入
-from wtforms.validators import Required 	#验证函数可直接从WTForms中导入
-from flask.ext.sqlalchemy import SQLAlchemy 	#数据库操作
+from flask.ext.script import Manager 	# 可指定启动方式
+from flask.ext.bootstrap import Bootstrap 	# 引入bootstrap
+from flask.ext.moment import Moment 	# 引入时间管理
+from flask.ext.wtf import Form 	# 引入Form基类，由Flask－WTF扩展定义
+from wtforms import StringField, SubmitField, FileField 	# 字段可直接从WTForms中导入
+from wtforms.validators import Required 	# 验证函数可直接从WTForms中导入
+from flask.ext.sqlalchemy import SQLAlchemy 	# 数据库操作
+from flask.ext.script import Shell 	# 集成python shell 使用shell时自动导入特定的对象
+from flask.ext.migrate import Migrate, MigrateCommand
 
 from datetime import datetime
 
@@ -31,18 +33,19 @@ app.config['SECRET_KEY'] = '******'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'data.sqlite')
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
 
-manager = Manager(app)	#适用很多的扩展：将程序实例作为参数传给构造函数
+manager = Manager(app)	# 适用很多的扩展：将程序实例作为参数传给构造函数
 bootstrap = Bootstrap(app)
 moment = Moment(app)
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 
 class Role(db.Model):
 	__tablename__ = 'roles'
 	id = db.Column(db.Integer, primary_key=True)
 	name = db.Column(db.String(64), unique=True)
-	#role users之间的一对多的关系
-	#lazy设置为dynamic类似hibernate的懒加载，只加载查询不加载数据
+	# role users之间的一对多的关系
+	# lazy设置为dynamic类似hibernate的懒加载，只加载查询不加载数据
 	users = db.relationship('User', backref='role', lazy='dynamic')	
 
 	def __repr__(self):
@@ -53,7 +56,7 @@ class User(db.Model):
 	__tablename__ = 'users'
 	id = db.Column(db.Integer, primary_key=True)
 	username = db.Column(db.String(64), unique=True, index=True)
-	#role users之间的一对多的关系
+	# role users之间的一对多的关系
 	role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
 
 	def __repr__(self):
@@ -66,7 +69,16 @@ class NameForm(Form):
 	'''
 	name = StringField('what is your name?', validators=[Required()])
 	submit = SubmitField('Submit')
-	#f = FileField()
+	# f = FileField()
+
+
+def make_shell_context():
+	'''
+	回调函数 注册了程序、数据库实例以及模型
+	'''
+	return dict(app=app, db=db, User=User, Role=Role)
+manager.add_command("shell", Shell(make_context=make_shell_context))
+manager.add_command('db', MigrateCommand)
 
 
 @app.route('/')
@@ -115,11 +127,11 @@ def template():
 	'''
 	默认下会在templates文件夹中寻找模板
 	'''
-	#return render_template('index.html')
-	#return render_template('index.html', current_time=datetime.utcnow())
+	# return render_template('index.html')
+	# return render_template('index.html', current_time=datetime.utcnow())
 	form = NameForm()
-	#根据返回值决定是重新渲染表单还是处理表单提交的数据，
-	#第一次访问是一个GET请求 函数返回false 
+	# 根据返回值决定是重新渲染表单还是处理表单提交的数据，
+	# 第一次访问是一个GET请求 函数返回false 
 	if form.validate_on_submit():
 		user = User.query.filter_by(username=form.name.data).first()
 		if user is None:
@@ -141,8 +153,8 @@ def templateuser(name):
 	模板中的变量可以复杂的数据结构，如列表字典等
 	可以在变量名后用竖线分隔添加过滤器
 	'''
-	#return render_template('user.html', name=name)
-	return render_template('buser.html', name=name)	# 继承自bootstrap得模板html
+	# return render_template('user.html', name=name)
+	return render_template('buser.html', name=name)	#  继承自bootstrap得模板html
 
 
 @app.route('/template/filter')
@@ -176,5 +188,5 @@ def internal_server_error(e):
 
 
 if __name__ == "__main__":
-	#app.run(debug=True)
-	manager.run()	#通过添加扩展的方式启动项目, python hello.py runserver --host 0.0.0.0
+	# app.run(debug=True)
+	manager.run()	# 通过添加扩展的方式启动项目, python hello.py runserver --host 0.0.0.0
