@@ -5,6 +5,8 @@ from flask import Flask
 from flask import make_response
 from flask import redirect
 from flask import render_template
+from flask import session
+from flask import url_for
 
 from flask.ext.script import Manager 	#可指定启动方式
 from flask.ext.bootstrap import Bootstrap 	#引入bootstrap
@@ -85,9 +87,11 @@ def template():
 	#根据返回值决定是重新渲染表单还是处理表单提交的数据，
 	#第一次访问是一个GET请求 函数返回false 
 	if form.validate_on_submit():
-		name = form.name.data
-		form.name.data = ""
-	return render_template('index.html', form=form, current_time=datetime.utcnow(), name=name)
+		#name = form.name.data
+		#form.name.data = ""
+		session["name"] = form.name.data
+		return redirect(url_for('template'))
+	return render_template('index.html', form=form, current_time=datetime.utcnow(), name=session.get("name"))
 
 
 @app.route('/template/<name>')
