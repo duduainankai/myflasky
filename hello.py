@@ -6,18 +6,30 @@ from flask import make_response
 from flask import redirect
 from flask import render_template
 
-from flask.ext.script import Manager
-from flask.ext.bootstrap import Bootstrap
-from flask.ext.moment import Moment
+from flask.ext.script import Manager 	#可指定启动方式
+from flask.ext.bootstrap import Bootstrap 	#引入bootstrap
+from flask.ext.moment import Moment 	#引入时间管理
+from flask.ext.wtf import Form 	#引入Form基类，由Flask－WTF扩展定义
+from wtforms import StringField, SubmitField, FileField 	#字段可直接从WTForms中导入
+from wtforms.validators import Required 	#验证函数可直接从WTForms中导入
 
 from datetime import datetime
 
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = '******'
 manager = Manager(app)	#适用很多的扩展：将程序实例作为参数传给构造函数
 bootstrap = Bootstrap(app)
 moment = Moment(app)
 
+
+class NameForm(Form):
+	'''
+	每一个类变量的值是相应字段类型的对象
+	'''
+	name = StringField('what is your name?', validators=[Required()])
+	submit = SubmitField('Submit')
+	#f = FileField()
 
 
 @app.route('/')
@@ -61,13 +73,21 @@ def redir():
 	return redirect("http://lizheming.top")
 
 
-@app.route('/template')
+@app.route('/template', methods=['GET', 'POST'])
 def template():
 	'''
 	默认下会在templates文件夹中寻找模板
 	'''
 	#return render_template('index.html')
-	return render_template('index.html', current_time=datetime.utcnow())
+	#return render_template('index.html', current_time=datetime.utcnow())
+	name = None
+	form = NameForm()
+	#根据返回值决定是重新渲染表单还是处理表单提交的数据，
+	#第一次访问是一个GET请求 函数返回false 
+	if form.validate_on_submit():
+		name = form.name.data
+		form.name.data = ""
+	return render_template('index.html', form=form, current_time=datetime.utcnow(), name=name)
 
 
 @app.route('/template/<name>')
