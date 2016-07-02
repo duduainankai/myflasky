@@ -7,6 +7,7 @@ from flask import redirect
 from flask import render_template
 from flask import session
 from flask import url_for
+from flask import flash
 
 from flask.ext.script import Manager 	#可指定启动方式
 from flask.ext.bootstrap import Bootstrap 	#引入bootstrap
@@ -16,6 +17,10 @@ from wtforms import StringField, SubmitField, FileField 	#字段可直接从WTFo
 from wtforms.validators import Required 	#验证函数可直接从WTForms中导入
 
 from datetime import datetime
+
+import sys
+reload(sys)
+sys.setdefaultencoding("utf-8")
 
 
 app = Flask(__name__)
@@ -87,10 +92,12 @@ def template():
 	#根据返回值决定是重新渲染表单还是处理表单提交的数据，
 	#第一次访问是一个GET请求 函数返回false 
 	if form.validate_on_submit():
-		#name = form.name.data
-		#form.name.data = ""
+		old_name = session.get("name")
+		print old_name
+		if old_name is not None and old_name != form.name.data:
+			flash("你居然修改了你的名字！")
 		session["name"] = form.name.data
-		return redirect(url_for('template'))
+		return redirect(url_for("template"))
 	return render_template('index.html', form=form, current_time=datetime.utcnow(), name=session.get("name"))
 
 
