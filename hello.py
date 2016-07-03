@@ -22,6 +22,7 @@ from flask.ext.mail import Mail
 from flask.ext.mail import Message
 
 from datetime import datetime
+from threading import Thread
 
 import os
 import sys
@@ -39,7 +40,7 @@ app.config['MAIL_PORT'] = 25	# 需要找对所使用smtp服务器的端口，书
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
-app.config['FLASKY_MAIL_SUBJECT_PREFIX'] = '[MyFlasky]'
+app.config['FLASKY_MAIL_SUBJECT_PREFIX'] = '[MyFlasky] '
 app.config['FLASKY_MAIL_SENDER'] = os.environ.get('MAIL_USERNAME') # 'MyFlasky Admin <myflasky@example.com>'
 app.config['FLASKY_ADMIN'] = os.environ.get('FLASKY_ADMIN')
 
@@ -83,12 +84,21 @@ class NameForm(Form):
 	# f = FileField()
 
 
+def send_sync_email(app, msg):
+	with app.app_context():
+		mail.send(msg)
+
+
 def send_email(to, subject, template, **kwargs):
 	msg = Message(app.config['FLASKY_MAIL_SUBJECT_PREFIX'] + subject, 
 		sender=app.config['FLASKY_MAIL_SENDER'], recipients=[to])
 	msg.body = render_template(template + '.txt', **kwargs)
 	msg.html = render_template(template + '.html', **kwargs)
-	mail.send(msg)
+	#mail.send(msg)
+	# 开一个线程异步的发送邮件
+	thr = Thread(target=send_sync_email, args=[app, msg])
+	thr.start()
+	return thr
 
 
 
