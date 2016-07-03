@@ -18,6 +18,8 @@ from wtforms.validators import Required 	# 验证函数可直接从WTForms中导
 from flask.ext.sqlalchemy import SQLAlchemy 	# 数据库操作
 from flask.ext.script import Shell 	# 集成python shell 使用shell时自动导入特定的对象
 from flask.ext.migrate import Migrate, MigrateCommand
+from flask.ext.mail import Mail
+from flask.ext.mail import Message
 
 from datetime import datetime
 
@@ -32,12 +34,21 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = '******'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'data.sqlite')
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
+app.config['MAIL_SERVER'] = 'smtp.163.com'
+app.config['MAIL_PORT'] = 25	# 需要找对所使用smtp服务器的端口，书上用的是gmail 端口587 126、163为25
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
+app.config['FLASKY_MAIL_SUBJECT_PREFIX'] = '[MyFlasky]'
+app.config['FLASKY_MAIL_SENDER'] = os.environ.get('MAIL_USERNAME') # 'MyFlasky Admin <myflasky@example.com>'
+app.config['FLASKY_ADMIN'] = os.environ.get('FLASKY_ADMIN')
 
 manager = Manager(app)	# 适用很多的扩展：将程序实例作为参数传给构造函数
 bootstrap = Bootstrap(app)
 moment = Moment(app)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+mail = Mail(app)
 
 
 class Role(db.Model):
@@ -70,6 +81,15 @@ class NameForm(Form):
 	name = StringField('what is your name?', validators=[Required()])
 	submit = SubmitField('Submit')
 	# f = FileField()
+
+
+def send_email(to, subject, template, **kwargs):
+	msg = Message(app.config['FLASKY_MAIL_SUBJECT_PREFIX'] + subject, 
+		sender=app.config['FLASKY_MAIL_SENDER'], recipients=[to])
+	msg.body = render_template(template + '.txt', **kwargs)
+	msg.html = render_template(template + '.html', **kwargs)
+	mail.send(msg)
+
 
 
 def make_shell_context():
@@ -138,6 +158,10 @@ def template():
 			user = User(username=form.name.data)
 			db.session.add(user)
 			session['known'] = False
+			if app.config['FLASKY_ADMIN']:
+				print app.config['FLASKY_ADMIN']
+				send_email(app.config['FLASKY_ADMIN'], 'New User', 
+					'mail/new_user', user=user)
 		else:
 			session['known'] = True
 		session['name'] = form.name.data
