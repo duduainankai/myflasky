@@ -1,3 +1,6 @@
+# !/usr/bin/env python
+#  encoding: utf-8
+
 '''
 存储配置
 基类Config中包含通用配置，子类分别定义专用的配置
