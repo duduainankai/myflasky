@@ -10,8 +10,11 @@ from .. import db
 from ..models import User, Role
 from ..email import send_email
 
+from flask.ext.login import login_required	# 添加该修饰器表示保护路由，只让认证用户访问
+
 
 @main.route("/", methods=['GET', 'POST'])
+@login_required
 def index():
 	form = NameForm()
 	if form.validate_on_submit():

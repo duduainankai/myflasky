@@ -27,6 +27,13 @@
 				<li><a href="/">Home</a></li>
 				{% endblock %}
 			</ul>
+			<ul class="nav navbar-nav">
+				{% if current_user.authenticated %}
+				<li><a href="{{ url_for('auth.logout') }}">Sign Out</a></li>
+				{% else %}
+				<li><a href="{{ url_for('auth.login') }}">Sign In</a></li>
+				{% endif %}
+			</ul>
 		</div>
 	</div>
 </div>
