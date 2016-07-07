@@ -48,6 +48,25 @@ class User(UserMixin, db.Model):
 		db.session.add(self)
 		return True
 
+	def generate_reset_token(self, expiration=3600):
+		s = Serializer(current_app.config["SECRET_KEY"])
+		token = s.dumps({"reset" : self.id})
+		return token
+
+	def reset(self, token, password):
+		s = Serializer(current_app.config["SECRET_KEY"])
+		try:
+			data = s.loads(token)
+		except Exception, e:
+			return False
+		if data.get("reset") == self.id:
+			self.password = password
+			db.session.add(self)
+			db.session.commit()
+			return True
+		return False
+
+
 # flask－login要求实现的回调函数 使用指定的标识符加载用户
 @login_manager.user_loader
 def load_user(user_id):

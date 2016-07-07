@@ -3,8 +3,9 @@
 
 
 from . import auth
-from flask import render_template, url_for, redirect, flash, request
-from .forms import LoginForm, RegisterForm, ChangepasswordForm
+from flask import render_template, url_for, redirect, flash, request, current_app
+from .forms import LoginForm, RegisterForm, ChangepasswordForm, \
+		PasswordResetRequestForm, PasswordResetForm
 from ..models import User
 from flask.ext.login import login_user, logout_user, login_required, current_user
 from .. import db
@@ -107,4 +108,33 @@ def change_password():
 	return render_template('auth/change_password.html', form=form)
 
 
+@auth.route('/reset', methods=['GET', 'POST'])
+def password_reset_request():
+	if not current_user.is_anonymous:
+        return redirect(url_for('main.index'))
+	form = PasswordResetRequestForm()
+	if form.validate_on_submit():
+		u = User.query.filter_by(email=form.email.data).first()
+		if u is not None:
+			token = u.generate_reset_token()
+			send_email(form.email.data, 'Reset Password', 'auth/email/reset_password',
+				user=u, token=token)
+			flash('An email with instructions to reset your password has been sent to you.')
+			return redirect(url_for('auth.login'))
+		else:
+			flash('Wrong Email!')
+	return render_template('auth/reset_password.html', form=form)
+
+
+
+@auth.route('/reset/<token>', methods=['GET', 'POST'])
+def password_reset(token):
+	form = PasswordResetForm()
+	if form.validate_on_submit():
+		u = User.query.filter_by(email=form.email.data).first()
+		if u.reset(token, form.password.data):
+			flash('Reset Password Succeed! Now You can Login!')
+			return redirect(url_for('auth.login'))
+		flash('The confirmation link is invalid or has expired')
+	return render_template('auth/reset_password.html', form=form)
 
