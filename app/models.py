@@ -66,6 +66,23 @@ class User(UserMixin, db.Model):
 			return True
 		return False
 
+	def generate_reset_email_token(self, email, expiration=3600):
+		s = Serializer(current_app.config['SECRET_KEY'])
+		token = s.dumps({'email': email, 'id': self.id})
+		return token
+
+	def reset_email(self, token):
+		s = Serializer(current_app.config['SECRET_KEY'])
+		try:
+			data = s.loads(token)
+		except Exception, e:
+			return False
+		if data.get('id') == self.id and data.get('email'):
+			self.email = data.get('email')
+			db.session.add(self)
+			return True
+		return False
+
 
 # flask－login要求实现的回调函数 使用指定的标识符加载用户
 @login_manager.user_loader

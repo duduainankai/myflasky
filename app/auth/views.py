@@ -5,7 +5,7 @@
 from . import auth
 from flask import render_template, url_for, redirect, flash, request, current_app
 from .forms import LoginForm, RegisterForm, ChangepasswordForm, \
-		PasswordResetRequestForm, PasswordResetForm
+		PasswordResetRequestForm, PasswordResetForm, EmailResetForm
 from ..models import User
 from flask.ext.login import login_user, logout_user, login_required, current_user
 from .. import db
@@ -111,7 +111,7 @@ def change_password():
 @auth.route('/reset', methods=['GET', 'POST'])
 def password_reset_request():
 	if not current_user.is_anonymous:
-        return redirect(url_for('main.index'))
+		return redirect(url_for('main.index'))
 	form = PasswordResetRequestForm()
 	if form.validate_on_submit():
 		u = User.query.filter_by(email=form.email.data).first()
@@ -137,4 +137,27 @@ def password_reset(token):
 			return redirect(url_for('auth.login'))
 		flash('The confirmation link is invalid or has expired')
 	return render_template('auth/reset_password.html', form=form)
+
+
+@auth.route('/reset-email', methods=['GET', 'POST'])
+@login_required
+def email_reset_request():
+	form = EmailResetForm()
+	if form.validate_on_submit():
+		token = current_user.generate_reset_email_token(form.email.data)
+		send_email(form.email.data, 'Reset Email', 'auth/email/reset_email',
+			user=current_user, token=token)
+		flash('An email with instructions to reset your email has been sent to you.')
+		return redirect(url_for('main.index'))
+	return render_template('auth/reset_email.html', form=form)
+
+
+@auth.route('/reset-email/<token>')
+@login_required
+def email_reset(token):
+	if current_user.reset_email(token):
+		flash('Your email has been updated!')
+		return redirect(url_for('main.index'))
+	flash('The confirmation link is invalid or has expired')
+	return redirect(url_for('main.index'))
 
