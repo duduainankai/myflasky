@@ -15,3 +15,10 @@ main = Blueprint('main', __name__)
 
 #最后引入， 避免循环导入依赖关系，因为在views和errors中还要导入蓝本main
 from . import views, errors
+from ..models import Permission
+
+
+#上下文处理器能让变量在所有模板中全局可访问
+@main.app_context_processor
+def inject_permissions():
+	return dict(Permisson=Permission)
