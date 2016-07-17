@@ -8,6 +8,8 @@ from . import login_manager
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from flask import current_app
 
+from datetime import datetime
+
 
 class User(UserMixin, db.Model):
 	__tablename__ = "users"
@@ -17,6 +19,11 @@ class User(UserMixin, db.Model):
 	password_hash = db.Column(db.String(128))
 	confirmed = db.Column(db.Boolean, default=False)
 	role_id = db.Column(db.Integer, db.ForeignKey("roles.id"))
+	name = db.Column(db.String(64))
+	location = db.Column(db.String(64))
+	about_me = db.Column(db.Text())
+	member_since = db.Column(db.DateTime(), default=datetime.utcnow)
+	last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
 
 	def __init__(self, **kwargs):
 		super(User, self).__init__(**kwargs)
@@ -97,6 +104,10 @@ class User(UserMixin, db.Model):
 			db.session.add(self)
 			return True
 		return False
+
+	def ping(self):
+		self.last_seen = datetime.utcnow()
+		db.session.add(self)
 
 
 # flask－login要求实现的回调函数 使用指定的标识符加载用户
