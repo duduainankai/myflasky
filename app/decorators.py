@@ -1,3 +1,7 @@
+# !/usr/bin/env python
+#  encoding: utf-8
+
+
 from functools import wraps
 from flask import abort
 from flask.ext.login import current_user
@@ -10,7 +14,10 @@ def permission_required(permission):
 		def wrapper(*args, **kwargs):
 			if not current_user.can(permission):
 				abort(403)
-			func(*args, **kwargs)
+			'''
+			要return，否则会出现View function did not return a response错误
+			'''
+			return func(*args, **kwargs)
 		return wrapper
 	return decorator
 	
