@@ -1,7 +1,7 @@
 # !/usr/bin/env python
 #  encoding: utf-8
 
-from flask import render_template, abort, redirect, url_for, flash
+from flask import render_template, abort, redirect, url_for, flash, request, current_app
 from ..models import User, Role, Permission, Post
 from .forms import EditProfileForm, EditProfileAdminForm, PostForm
 from .. import db
@@ -11,7 +11,7 @@ from ..decorators import admin_required
 from . import main
 
 
-@main.route("/")
+@main.route("/", methods=['GET', 'POST'])
 def index():
 	#return render_template('index.html')
 	form = PostForm()
@@ -19,8 +19,12 @@ def index():
 		post = Post(body=form.body.data, author=current_user._get_current_object())
 		db.session.add(post)
 		return redirect(url_for('.index'))
-	posts = Post.query.order_by(Post.timestamp.desc()).all()
-	return render_template('index.html', form=form, posts=posts, Permission=Permission)
+	page = request.args.get('page', 1, type=int)
+	pagination = Post.query.order_by(Post.timestamp.desc()).paginate(page, 
+		per_page=current_app.config.get('FLASK_POSTS_PER_PAGE', 10), error_out=False)
+	#posts = Post.query.order_by(Post.timestamp.desc()).all()
+	posts = pagination.items
+	return render_template('index.html', form=form, posts=posts, Permission=Permission, pagination=pagination)
 
 
 @main.route("/user/<username>")
