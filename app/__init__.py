@@ -12,12 +12,15 @@ from flask.ext.mail import Mail
 from flask.ext.moment import Moment
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
+from flask.ext.pagedown import PageDown
 from config import config
 
 bootstrap = Bootstrap()
 mail = Mail()
 moment = Moment()
 db = SQLAlchemy()
+pagedown = PageDown()
+
 login_manager = LoginManager()
 login_manager.session_protection = 'strong'	# 设置不同的安全等级防止用户会话被篡改
 login_manager.login_view = 'auth.login'	# 设置登录页面的端点
@@ -37,6 +40,7 @@ def create_app(config_name):
 	moment.init_app(app)
 	db.init_app(app)
 	login_manager.init_app(app)
+	pagedown.init_app(app)
 
 	'''
 	注册蓝本
