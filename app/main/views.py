@@ -2,11 +2,11 @@
 #  encoding: utf-8
 
 from flask import render_template, abort, redirect, url_for, flash, request, current_app
-from ..models import User, Role, Permission, Post
+from ..models import User, Role, Permission, Post, Permission
 from .forms import EditProfileForm, EditProfileAdminForm, PostForm
 from .. import db
 from flask.ext.login import current_user, login_required
-from ..decorators import admin_required
+from ..decorators import admin_required, permission_required
 
 from . import main
 
@@ -33,7 +33,7 @@ def user(username):
 	if not user:
 		abort(404)
 	posts = user.posts.order_by(Post.timestamp.desc()).all()
-	return render_template("user.html", user=user, posts=posts)
+	return render_template("user.html", user=user, posts=posts, Permission=Permission)
 
 
 @main.route('/edit-profile', methods=['GET', 'POST'])
@@ -100,3 +100,37 @@ def edit(id):
 		return redirect(url_for('.post', id=post.id))
 	form.body.data = post.body
 	return render_template('edit_post.html', form=form)
+
+
+@main.route('/follow/<username>')
+@login_required
+@permission_required(Permission.FOLLOW)
+def follow(username):
+	u = User.query.filter_by(username=username).first()
+	if u is None:
+		flash('Invalid user.')
+		return redirect(url_for('.index'))
+	if current_user.is_following(u):
+		flash('You are already following this user.')
+		return redirect(url_for('.user', username=username))
+	current_user.follow(u)
+	db.session.add(current_user)
+	flash('You are now following %s.' % username)
+	return redirect(url_for('.user', username=username))
+
+
+@main.route('/unfollow/<username>')
+@login_required
+@permission_required(Permission.FOLLOW)
+def unfollow(username):
+	u = User.query.filter_by(username=username).first()
+	if u is None:
+		flash('Invalid user.')
+		return redirect(url_for('.index'))
+	if not current_user.is_following(u):
+		flash('You have not following this user.')
+		return redirect(url_for('.user', username=username))
+	current_user.unfollow(u)
+	db.session.add(current_user)
+	flash('You are now unfollowing %s.' % username)
+	return redirect(url_for('.user', username=username))
