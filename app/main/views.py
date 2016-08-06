@@ -134,3 +134,28 @@ def unfollow(username):
 	db.session.add(current_user)
 	flash('You are now unfollowing %s.' % username)
 	return redirect(url_for('.user', username=username))
+
+
+@main.route('/followers/<username>')
+@login_required
+def followers(username):
+	user = User.query.filter_by(username=username).first()
+	if user is None:
+		flash('Invalid user.')
+		return redirect(url_for('.index'))
+	page = request.args.get('page', 1, type=int)
+	pagination = user.followers.paginate(
+		page, per_page=current_app.config.get('FLASK_FOLLOWERS_PER_PAGE',10),error_out=False)
+	followers = [{'user': item.follower, 'timestamp': item.timestamp} for item in pagination.items]
+	return render_template('followers.html', pagination=pagination, followers=followers, user=user)
+
+
+
+@main.route('/followed_by/<username>')
+@login_required
+def followed_by(username):
+	u = User.query.filter_by(username=username).first()
+	if u is None:
+		flash('Invalid user.')
+		return redirect(url_for('.index'))	
+
