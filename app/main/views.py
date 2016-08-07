@@ -146,16 +146,22 @@ def followers(username):
 	page = request.args.get('page', 1, type=int)
 	pagination = user.followers.paginate(
 		page, per_page=current_app.config.get('FLASK_FOLLOWERS_PER_PAGE',10),error_out=False)
-	followers = [{'user': item.follower, 'timestamp': item.timestamp} for item in pagination.items]
-	return render_template('followers.html', pagination=pagination, followers=followers, user=user)
+	follows = [{'user': item.follower, 'timestamp': item.timestamp} for item in pagination.items]
+	return render_template('followers.html', user=user, title='Followers of', endpoint='.followers',
+		pagination=pagination, follows=follows)
 
 
 
 @main.route('/followed_by/<username>')
 @login_required
 def followed_by(username):
-	u = User.query.filter_by(username=username).first()
-	if u is None:
+	user = User.query.filter_by(username=username).first()
+	if user is None:
 		flash('Invalid user.')
 		return redirect(url_for('.index'))	
-
+	page = request.args.get('page', 1, type=int)
+	pagination = user.followed.paginate(
+		page, per_page=current_app.config.get('FLASK_FOLLOWERS_PER_PAGE', 10), error_out=False)
+	follows = [{'user': item.followed, 'timestamp': item.timestamp} for item in pagination.items]
+	return render_template('followers.html', user=user, title='Followed of', endpoint='.followed_by',
+		pagination=pagination, follows=follows)
