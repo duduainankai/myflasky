@@ -201,6 +201,19 @@ class User(UserMixin, db.Model):
 				db.session.add(user)
 				db.session.commit()
 
+	def generate_auth_token(self, expiration):
+		s = Serializer(current_app.config['SECRET_KEY'], expires_in=expiration)
+		return s.dumps({'id': self.id})
+
+	@staticmethod
+	def verify_auth_token(token):
+		s = Serializer(current_app.config['SECRET_KEY'])
+		try:
+			data = s.loads(token)
+		except:
+			return None
+		return User.query.get(data['id'])
+
 
 # flask－login要求实现的回调函数 使用指定的标识符加载用户
 @login_manager.user_loader
