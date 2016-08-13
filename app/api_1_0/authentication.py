@@ -1,4 +1,4 @@
-from flask import g, jsonify
+from flask import g, jsonify, request
 from flask.ext.httpauth import HTTPBasicAuth
 from ..models import User, AnonymousUser
 from .errors import *
@@ -32,6 +32,7 @@ def auth_error():
 @api.before_request
 @auth.login_required
 def before_request():
+	print request.full_path, request.method
 	if not g.current_user.is_anonymous and \
 			not g.current_user.confirmed:
 		return forbidden('Unconfirmed account')
