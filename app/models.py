@@ -222,7 +222,7 @@ class User(UserMixin, db.Model):
 			'member_since': self.member_since,
 			'last_seen': self.last_seen,
 			'posts': url_for('api.get_user_posts', id=self.id, _external=True),
-			'followed_posts': url_for('api.get_user_followed_posts', id=self.id, _external=True),
+			'followed_posts': url_for('api.get_user_timeline', id=self.id, _external=True),
 			'post_count': self.posts.count()
 		}
 		return json_user
@@ -260,10 +260,10 @@ class Role(db.Model):
     def insert_roles():
         roles = {
             'User': (Permission.FOLLOW | 
-                    Permission.COMMMENT | 
+                    Permission.COMMENT | 
                     Permission.WRITE_ARTICLES, True),
             "Moderator": (Permission.FOLLOW | 
-                    Permission.COMMMENT | 
+                    Permission.COMMENT | 
                     Permission.WRITE_ARTICLES |
                     Permission.MODERATE_COMMENTS, False),
             "Administrator": (0xff, False)
